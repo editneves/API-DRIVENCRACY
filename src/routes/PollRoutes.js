@@ -4,11 +4,11 @@ import {
   } from "../controller/Poll.js"
   import { Router } from 'express'
   import { validateSchema } from "../middleware/validateSchema.js"
-  import { PollSchema } from '../schema/PollSchema'
+  import {pollSchema} from "../schema/PollSchema.js"
 
-  const PollRouter = Router()
+  const pollRouter = Router()
   
-  PollRouter.get("/poll", listPoll)
-  recipiePoll.post("/poll", validateSchema(PollSchema), registeredPoll)
+  pollRouter.get("/poll", listPoll)
+  pollRouter.post("/poll", validateSchema(pollSchema), registeredPoll)
   
-  export default PollRouter
+  export default pollRouter
