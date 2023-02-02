@@ -5,4 +5,7 @@ export const pollSchema = joi.object({
   expireAt: joi.string().required(),
 })
 
-
+export const choiceSchema = joi.object({
+  title: joi.string().required(),
+  pollId: joi.string().required(),
+})
