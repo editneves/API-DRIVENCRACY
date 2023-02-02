@@ -2,20 +2,22 @@ import {
     listPoll,
     registeredPoll,
     registeredChoice,
-    getPollById,
+    getPollByIdChoice,
     registeredVoto,
+    getPollByIdResult,
   } from "../controller/Poll.js"
   import { Router } from 'express'
   import { validateSchema } from "../middleware/validateSchema.js"
-  import {pollSchema,choiceSchema} from "../schema/PollSchema.js"
+  import {choiceSchema} from "../schema/PollSchema.js"
 
   const pollRouter = Router()
   
   pollRouter.get("/poll", listPoll)
-  pollRouter.post("/poll", validateSchema(pollSchema), registeredPoll)
+  pollRouter.post("/poll",  registeredPoll)
   pollRouter.post("/choice", validateSchema(choiceSchema), registeredChoice)
-  pollRouter.get("/poll/:id/choice", getPollById)
+  pollRouter.get("/poll/:id/choice", getPollByIdChoice)
   pollRouter.post("/choice/:id/vote", registeredVoto)
   
+  pollRouter.get("/poll/:id/result", getPollByIdResult)
   
   export default pollRouter
