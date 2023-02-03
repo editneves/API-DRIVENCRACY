@@ -17,7 +17,6 @@ import {
   pollRouter.post("/choice", validateSchema(choiceSchema), registeredChoice)
   pollRouter.get("/poll/:id/choice", getPollByIdChoice)
   pollRouter.post("/choice/:id/vote", registeredVoto)
-  
   pollRouter.get("/poll/:id/result", getPollByIdResult)
-  
+ 
   export default pollRouter

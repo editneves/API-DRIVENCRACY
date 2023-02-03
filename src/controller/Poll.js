@@ -1,7 +1,6 @@
 import db from "../config/dataBase.js";
 import { ObjectId } from "mongodb";
 import dayjs from "dayjs";
-import joi from "joi";
 
 export async function listPoll(req, res) {
   try {
@@ -40,39 +39,36 @@ export async function registeredPoll(req, res) {
   }
 }
 
-// Se a enquete já estiver expirado deve retornar erro com status 403.
 export async function registeredChoice(req, res) {
   const choice = req.body;
 
+  const now = dayjs();
   try {
-    // const today = new Date();
-    // const priorDate = new Date(new Date().setDate(today.getDate() - 30));
-    // const todayAnother = dayjs(priorDate).format("YYYY-MM-DD HH:mm");
-    // console.log(todayAnother)
-    // const pollExpireAt = await db
-    // .collection("poll")
-    // .findOne({ _id: ObjectId(choice.pollId) });
-    // console.log(ISODate(pollExpireAt.expireAt),choice.pollId)
+    const pollExpireAt = await db
+      .collection("poll")
+      .findOne({ _id: ObjectId(choice.pollId) });
 
-    // if (pollExpireAt.expireAt > todayAnother) {
+    const today = new Date(Date.now());
+    const dateExp = new Date(pollExpireAt.expireAt);
+    //const trintaDias = 30*1000*60*60*24;
+    // console.log(dateExp,today);
 
-    //   return res.status(403).send("Essa enquete já foi expirada!");
-    // }
-
+    if (dateExp < today) {
+      console.log("expirou");
+      return res.status(403).send("Enquete expirada!");
+    }
     const pollExist = await db
       .collection("poll")
       .findOne({ title: choice.title });
     if (pollExist) {
       return res.status(404).send("Essa opção de enquete já existe!");
     }
-
     const choiceExist = await db
       .collection("choice")
       .findOne({ title: choice.title });
     if (choiceExist) {
       return res.status(409).send("Essa opção de voto já existe!");
     }
-
     await db.collection("choice").insertOne(choice);
     res.status(201).send(choice);
   } catch (err) {
@@ -83,22 +79,42 @@ export async function registeredChoice(req, res) {
 
 export async function getPollByIdChoice(req, res) {
   const { id } = req.params;
-  const date = await db.collection("poll").findOne({ _id: ObjectId(id) });
+  try {
+    const date = await db.collection("poll").findOne({ _id: ObjectId(id) });
 
-  if (!date) {
-    res.status(404).send("Não existe essa enquete");
+    if (!date) {
+      res.status(404).send("Não existe essa enquete");
+    }
+    const choices = await db.collection("choice").find({ pollId: id }).toArray();
+    return res.send(choices);
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Deu algo errado no servidor");
   }
-  return res.send(date);
 }
-
 const now = dayjs();
-// Verificar se é uma opção existente, se não existir retornar 404.
-// Não pode ser registrado se a enquete já estiver expirado, retornar erro 403.
 export async function registeredVoto(req, res) {
   const { id } = req.params;
   // _id do registred choice
   try {
-    const date = await db.collection("choice").insertOne({
+    const chicePoll = await db
+      .collection("choice")
+      .findOne({ _id: ObjectId(id) });
+    if (!chicePoll) {
+      return res.status(404).send("A opção de voto não existe");
+    }
+
+    await db.collection("poll").findOne({ _id: ObjectId(id) });
+
+    const today = new Date(Date.now());
+    const dateExp = new Date(poll.expireAt);
+
+    if (dateExp < today) {
+      console.log("expirou");
+      return res.status(403).send("Enquete expirada!");
+    }
+
+    await db.collection("choice").insertOne({
       choiceId: ObjectId(id),
       createdAt: dayjs(now).format("YYYY-MM-DD HH:mm"),
     });
@@ -111,15 +127,17 @@ export async function registeredVoto(req, res) {
 
 export async function getPollByIdResult(req, res) {
   const { id } = req.params;
-  const date = await db.collection("poll").findOne({ _id: ObjectId(id) });
-  // await db.collection("poll").updateOne({
-  //   result: {
-  //     title: "Javascript",
-  //     votes: 487,
-  //   },
-  // });
+  try{
+    const date = await db.collection("poll").findOne({ _id: ObjectId(id) });
   if (!date) {
     res.status(404).send("Não existe essa enquete");
   }
-  return res.send(date);
+  
+  const result = await db.collection("poll").aggregate([{$sortByCount: "$title"}]).toArray()
+
+   return res.send(result);
+  }catch (err) {
+    console.log(err);
+    res.status(500).send("Deu algo errado no servidor");
+  }
 }
